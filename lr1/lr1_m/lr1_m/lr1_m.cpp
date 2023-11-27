@@ -1,4 +1,4 @@
-﻿#include <opencv2/opencv.hpp> 
+﻿ #include <opencv2/opencv.hpp> 
 #include <cmath>
 #include <iostream>
 
@@ -214,8 +214,10 @@ void roberts(const Mat& input_image, Mat& output_image)
     output_image = input_image.clone();
     int nRows = output_image.rows;
     int nCols = output_image.cols;
-    for (int i = 0; i < nRows - 1; i++) {
-        for (int j = 0; j < nCols - 1; j++) {
+    for (int i = 0; i < nRows - 1; i++) 
+    {
+        for (int j = 0; j < nCols - 1; j++) 
+        {
             int t1 = (input_image.at<uchar>(i, j) -
                 input_image.at<uchar>(i + 1, j + 1)) *
                 (input_image.at<uchar>(i, j) -
@@ -234,7 +236,8 @@ void roberts(const Mat& input_image, Mat& output_image)
 void insertion_sort(int window[])
 {
     int temp, i, j;
-    for (i = 0; i < 9; i++) {
+    for (i = 0; i < 9; i++) 
+    {
         temp = window[i];
         for (j = i - 1; j >= 0 && temp < window[j]; j--) {
             window[j + 1] = window[j];
@@ -244,7 +247,8 @@ void insertion_sort(int window[])
 }
 
 // Медианный фильтр 
-void median_blure(Mat& input_image, Mat& output_image) {
+void median_blure(Mat& input_image, Mat& output_image) 
+{
     int window[9];
 
     output_image = input_image.clone();
@@ -252,8 +256,10 @@ void median_blure(Mat& input_image, Mat& output_image) {
         for (int x = 0; x < input_image.cols; x++)
             output_image.at<uchar>(y, x) = 0.0;
 
-    for (int y = 1; y < input_image.rows - 1; y++) {
-        for (int x = 1; x < input_image.cols - 1; x++) {
+    for (int y = 1; y < input_image.rows - 1; y++) 
+    {
+        for (int x = 1; x < input_image.cols - 1; x++) 
+        {
             window[0] = input_image.at<uchar>(y - 1, x - 1);
             window[1] = input_image.at<uchar>(y, x - 1);
             window[2] = input_image.at<uchar>(y + 1, x - 1);
@@ -271,11 +277,11 @@ void median_blure(Mat& input_image, Mat& output_image) {
             output_image.at<uchar>(y, x) = window[4];
         }
     }
-
 }
 
 //Фильтр «Мозаика»
-void mosaic(const Mat& input_image, Mat& output_image) {
+void mosaic(const Mat& input_image, Mat& output_image) 
+{
     output_image = input_image.clone();
     Mat ROI(output_image, cv::Rect(0, 0, input_image.cols, input_image.rows)); // область мозаики
     int W = 20, H = 20; // Ожидаемые ширина и высота большого пикселя

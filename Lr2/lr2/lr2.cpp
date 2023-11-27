@@ -44,7 +44,8 @@ int main()
     
     Mat binResult = binaryImage.clone();
     Mat monoResult = grayscaleImage.clone();
-
+    show_image(input_image, binResult,"binResult");
+    show_image(input_image, monoResult, "monoResult");
 
     int input_key;
 
@@ -54,12 +55,18 @@ int main()
     int apertureSize;
     int contourSize;
 
+    
+     
+     
     while (true)
     {
-        cout << "Select a filter:\n 1) Binary Erosion\n 2) Binary Dilation\n 3) "
-            "Binary Closing\n 4) Binary Opening\n 5) Halftone Erosion\n 6) Halftone"
-            "Dilation\n 7) Halftone Closing\n 8) Halftone Opening\n 9) Contour Selection\n 10)"
-            "Multiscale Morphological Gradient\n 0) Exit\n";
+        cout << "Select a filter:\n 1) Фильтр бинарной эрозии\n 2) Фильтр бинарной дилатации\n 3) "
+            "Binary Closing Оператор закрытия\n 4) Binary Opening Оператор открытия\n "
+            
+            "5) Halftone Erosion Фильтр полутоновой эрозии\n 6) Halftone"
+            "Dilation Фильтр полутоновой дилатации\n 7) Halftone Closing Оператор закрытия\n 8) Halftone Opening Оператор открытия\n"
+            "9) Contour Selection Оператор выделения контуров\n 10)"
+            "Multiscale Morphological Gradient Многомасштабный морфологический градиент\n 0) Exit\n";
         cin >> input_key;
 
         switch (input_key)
@@ -68,57 +75,49 @@ int main()
             cout << "Enter aperture size: ";
             cin >> apertureSize;
             bin_erode(binaryImage, binResult, apertureSize);
-            binShow = true;
-            monoShow = false;
+            show_image(binaryImage, binResult, "Фильтр бинарной эрозии");
             break;
         case 2:
             cout << "Enter aperture size: ";
             cin >> apertureSize;
             bin_dilate(binaryImage, binResult, apertureSize);
-            binShow = true;
-            monoShow = false;
+            show_image(binaryImage, binResult, "Фильтр бинарной дилатации");
             break;
         case 3:
             cout << "Enter aperture size: ";
             cin >> apertureSize;
             close(binaryImage, binResult, apertureSize, true);
-            binShow = true;
-            monoShow = false;
+            show_image(binaryImage, binResult, "Binary ClosingОператор закрытия");
             break;
         case 4:
             cout << "Enter aperture size: ";
             cin >> apertureSize;
             open(binaryImage, binResult, apertureSize, true);
-            binShow = true;
-            monoShow = false;
+            show_image(binaryImage, binResult, "Binary Оператор открытия");
             break;
         case 5:
             cout << "Enter aperture size: ";
             cin >> apertureSize;
             mono_erode(grayscaleImage, monoResult, apertureSize);
-            binShow = false;
-            monoShow = true;
+            show_image(grayscaleImage, monoResult, "Фильтр полутоновой эрозии");
             break;
         case 6:
             cout << "Enter aperture size: ";
             cin >> apertureSize;
             mono_dilate(grayscaleImage, monoResult, apertureSize);
-            binShow = false;
-            monoShow = true;
+            show_image(grayscaleImage, monoResult, "Фильтр полутоновой дилатации");
             break;
         case 7:
             cout << "Enter aperture size: ";
             cin >> apertureSize;
             close(grayscaleImage, monoResult, apertureSize, false);
-            binShow = false;
-            monoShow = true;
+            show_image(grayscaleImage, monoResult, "Halftone Closing Оператор закрытия");
             break;
         case 8:
             cout << "Enter aperture size: ";
             cin >> apertureSize;
             open(grayscaleImage, monoResult, apertureSize, false);
-            binShow = false;
-            monoShow = true;
+            show_image(grayscaleImage, monoResult, "Halftone Opening Оператор открытия");
             break;
         case 9:
             cout << "Enter aperture size: ";
@@ -127,42 +126,17 @@ int main()
             cin >> contourSize;
             contour_selection(grayscaleImage, monoResult, apertureSize,
                 contourSize);
-            binShow = false;
-            monoShow = true;
+            show_image(grayscaleImage, monoResult, "Contour Selection Оператор выделения контуров");
             break;
         case 10:
             gradient(grayscaleImage, monoResult);
-            binShow = false;
-            monoShow = true;
+            show_image(grayscaleImage, monoResult, "Многомасштабный морфологический градиент");
             break;
         case 0:
-            check = false;
-            binShow = false;
-            monoShow = false;
             break;
         default:
             cout << "Wrong command!\n Try aganin\n";
-            binShow = false;
-            monoShow = false;
             break;
-
-
-            if (binShow)
-            {
-                imshow("Original", binaryImage);
-                imshow("Filtered", binResult);
-                waitKey(0);
-                destroyAllWindows();
-                //imwrite("C:/Users/aidar/Downloads/result.jpg", binResult);
-            }
-            if (monoShow)
-            {
-                imshow("Original", grayscaleImage);
-                imshow("Filtered", monoResult);
-                waitKey(0);
-                destroyAllWindows();
-                //imwrite("C:/Users/aidar/Downloads/result.jpg", monoResult);
-            }
         }
     }
     return 0;
@@ -170,7 +144,8 @@ int main()
 
 
 
-void show_image(const Mat input_img, Mat& output_img, string filter_name) {
+void show_image(const Mat input_img, Mat& output_img, string filter_name) 
+{
     imshow("Исходное изображение", input_img);
     waitKey(0);
     imshow(filter_name, output_img);

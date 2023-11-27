@@ -129,6 +129,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BinGray.cpp" />
     <ClCompile Include="lr2.cpp" />
   </ItemGroup>
   <ItemGroup>
