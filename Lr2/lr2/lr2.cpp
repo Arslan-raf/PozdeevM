@@ -1,338 +1,442 @@
-п»ї
+
 #include <opencv2/opencv.hpp> 
 #include <cmath>
 #include <iostream>
 
-
 using namespace cv;
 using namespace std;
 
-void bin_erode(const Mat& input_img, Mat& output_img, int aperture_size);
-void bin_dilate(const Mat& input_img, Mat& output_img, int aperture_size);
-void mono_erode(const Mat& input_img, Mat& output_img, int aperture_size);
-void mono_erode(const Mat& input_img, Mat& output_img, int aperture_size);
-void mono_dilate(const Mat& input_img, Mat& output_img, int aperture_size);
-void close(const Mat& input_img, Mat& output_img, int aperture_size, bool isBin);
-void open(const Mat& input_img, Mat& output_img, int aperture_size, bool isBin);
-void contour_selection(const Mat& input_img, Mat& output_img, int aperture_size, int contour_size);
-void gradient(const Mat& input_img, Mat& output_img);
+void binaryDilation(Mat& inputImage, Mat& outputImage, int kernelSize);
+void binaryErosion(Mat& inputImage, Mat& outputImage, int kernelSize);
+void binaryClosing(Mat& inputImage, Mat& outputImage, int kernelSize);
+void binaryOpening(Mat& inputImage, Mat& outputImage, int kernelSize);
 
+void grayscaleErosion(Mat& inputImage, Mat& outputImage, int kernelSize);
+void grayscaleDilation(Mat& inputImage, Mat& outputImage, int kernelSize);
+void grayscaleClosing(Mat& inputImage, Mat& outputImage, int kernelSize);
+void grayscaleOpening(Mat& inputImage, Mat& outputImage, int kernelSize);
+void contoursOperator(Mat& inputImage, Mat& outputImage);
+void multiscaleMorphologicalGradient(Mat& inputImage, Mat& outputImage, int minKernelSize, int maxKernelSize);
 
 void show_image(const Mat input_img, Mat& output_img, string filter_name);
+void sobelOperator(cv::Mat& inputImage, cv::Mat& outputImage);
 
 int main()
 {
     setlocale(LC_ALL, "Russian");
-    // Р—Р°РіСЂСѓР·РєР° РёР·РѕР±СЂР°Р¶РµРЅРёСЏ 
+    // Загрузка изображения 
     Mat input_image = imread("myImg1.jpg");
 
     if (input_image.empty())
     {
-        cout << "РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё С„Р°Р№Р»Р°" << endl;
+        cout << "Ошибка загрузки файла" << endl;
         return -1;
     }
 
-
-    //Р РµР·СѓР»СЊС‚Р°С‚ 
     Mat output_image(input_image.rows, input_image.cols, CV_8UC1, WINDOW_GUI_NORMAL);
 
-    Mat grayscaleImage; 
+    Mat grayscaleImage;
     cvtColor(input_image, grayscaleImage, COLOR_BGR2GRAY);
-     
-    Mat binaryImage; 
-    threshold(grayscaleImage, binaryImage, 128, 255, THRESH_BINARY); 
-    
+
+    Mat binaryImage;
+    threshold(grayscaleImage, binaryImage, 128, 255, THRESH_BINARY);
+
     Mat binResult = binaryImage.clone();
     Mat monoResult = grayscaleImage.clone();
-    show_image(input_image, binResult,"binResult");
-    show_image(input_image, monoResult, "monoResult");
+    show_image(input_image, binResult, "Исходное бинарное изображение");
+    show_image(input_image, monoResult, "Исходное полутоновое изображение");
 
     int input_key;
-
-    bool check = true;
-    bool binShow;
-    bool monoShow;
     int apertureSize;
-    int contourSize;
 
-    
-     
-     
     while (true)
     {
-        cout << "Select a filter:\n 1) Р¤РёР»СЊС‚СЂ Р±РёРЅР°СЂРЅРѕР№ СЌСЂРѕР·РёРё\n 2) Р¤РёР»СЊС‚СЂ Р±РёРЅР°СЂРЅРѕР№ РґРёР»Р°С‚Р°С†РёРё\n 3) "
-            "Binary Closing РћРїРµСЂР°С‚РѕСЂ Р·Р°РєСЂС‹С‚РёСЏ\n 4) Binary Opening РћРїРµСЂР°С‚РѕСЂ РѕС‚РєСЂС‹С‚РёСЏ\n "
-            
-            "5) Halftone Erosion Р¤РёР»СЊС‚СЂ РїРѕР»СѓС‚РѕРЅРѕРІРѕР№ СЌСЂРѕР·РёРё\n 6) Halftone"
-            "Dilation Р¤РёР»СЊС‚СЂ РїРѕР»СѓС‚РѕРЅРѕРІРѕР№ РґРёР»Р°С‚Р°С†РёРё\n 7) Halftone Closing РћРїРµСЂР°С‚РѕСЂ Р·Р°РєСЂС‹С‚РёСЏ\n 8) Halftone Opening РћРїРµСЂР°С‚РѕСЂ РѕС‚РєСЂС‹С‚РёСЏ\n"
-            "9) Contour Selection РћРїРµСЂР°С‚РѕСЂ РІС‹РґРµР»РµРЅРёСЏ РєРѕРЅС‚СѓСЂРѕРІ\n 10)"
-            "Multiscale Morphological Gradient РњРЅРѕРіРѕРјР°СЃС€С‚Р°Р±РЅС‹Р№ РјРѕСЂС„РѕР»РѕРіРёС‡РµСЃРєРёР№ РіСЂР°РґРёРµРЅС‚\n 0) Exit\n";
+        cout << "Выберите фильтр:\n"
+            "1) Фильтр бинарной эрозии\n"
+            "2) Фильтр бинарной дилатации\n"
+            "3) Оператор закрытия (бинарное)\n"
+            "4) Оператор открытия (бинарное)\n"
+            "5) Фильтр полутоновой эрозии\n"
+            "6) Фильтр полутоновой дилатации\n"
+            "7) Оператор закрытия (полутоновое)\n"
+            "8) Оператор открытия (полутоновое)\n"
+            "9) Оператор выделения контуров\n"
+            "10) Многомасштабный морфологический градиент\n"
+            "0) Выход\n";
         cin >> input_key;
 
         switch (input_key)
         {
         case 1:
+        {
             cout << "Enter aperture size: ";
             cin >> apertureSize;
-            bin_erode(binaryImage, binResult, apertureSize);
-            show_image(binaryImage, binResult, "Р¤РёР»СЊС‚СЂ Р±РёРЅР°СЂРЅРѕР№ СЌСЂРѕР·РёРё");
+            binaryErosion(binaryImage, binResult, apertureSize);
+            show_image(binaryImage, binResult, "Фильтр бинарной эрозии");
             break;
+        }
         case 2:
+        {
             cout << "Enter aperture size: ";
             cin >> apertureSize;
-            bin_dilate(binaryImage, binResult, apertureSize);
-            show_image(binaryImage, binResult, "Р¤РёР»СЊС‚СЂ Р±РёРЅР°СЂРЅРѕР№ РґРёР»Р°С‚Р°С†РёРё");
+            binaryDilation(binaryImage, binResult, apertureSize);
+            show_image(binaryImage, binResult, "Фильтр бинарной дилатации");
             break;
+        }
         case 3:
+        {
+            Mat binaryClosedImage;
             cout << "Enter aperture size: ";
             cin >> apertureSize;
-            close(binaryImage, binResult, apertureSize, true);
-            show_image(binaryImage, binResult, "Binary ClosingРћРїРµСЂР°С‚РѕСЂ Р·Р°РєСЂС‹С‚РёСЏ");
+            binaryClosing(binaryImage, binaryClosedImage, apertureSize);
+            show_image(binaryImage, binaryClosedImage, "Оператор закрытия (бинарное)");
             break;
+        }
         case 4:
+        {
+            Mat binaryOpenedImage;
             cout << "Enter aperture size: ";
             cin >> apertureSize;
-            open(binaryImage, binResult, apertureSize, true);
-            show_image(binaryImage, binResult, "Binary РћРїРµСЂР°С‚РѕСЂ РѕС‚РєСЂС‹С‚РёСЏ");
+            binaryOpening(binaryImage, binaryOpenedImage, apertureSize);
+            show_image(binaryImage, binaryOpenedImage, "Оператор открытия (бинарное)");
             break;
+        }
         case 5:
+        {
             cout << "Enter aperture size: ";
             cin >> apertureSize;
-            mono_erode(grayscaleImage, monoResult, apertureSize);
-            show_image(grayscaleImage, monoResult, "Р¤РёР»СЊС‚СЂ РїРѕР»СѓС‚РѕРЅРѕРІРѕР№ СЌСЂРѕР·РёРё");
+            grayscaleErosion(grayscaleImage, monoResult, apertureSize);
+            show_image(grayscaleImage, monoResult, "Фильтр полутоновой эрозии");
             break;
+        }
         case 6:
+        {
             cout << "Enter aperture size: ";
             cin >> apertureSize;
-            mono_dilate(grayscaleImage, monoResult, apertureSize);
-            show_image(grayscaleImage, monoResult, "Р¤РёР»СЊС‚СЂ РїРѕР»СѓС‚РѕРЅРѕРІРѕР№ РґРёР»Р°С‚Р°С†РёРё");
+            grayscaleDilation(grayscaleImage, monoResult, apertureSize);
+            show_image(grayscaleImage, monoResult, "Фильтр полутоновой дилатации");
             break;
+        }
         case 7:
+        {
             cout << "Enter aperture size: ";
             cin >> apertureSize;
-            close(grayscaleImage, monoResult, apertureSize, false);
-            show_image(grayscaleImage, monoResult, "Halftone Closing РћРїРµСЂР°С‚РѕСЂ Р·Р°РєСЂС‹С‚РёСЏ");
+            grayscaleClosing(grayscaleImage, monoResult, apertureSize);
+            show_image(grayscaleImage, monoResult, "Оператор закрытия (полутоновой)");
             break;
+        }
         case 8:
+        {
             cout << "Enter aperture size: ";
             cin >> apertureSize;
-            open(grayscaleImage, monoResult, apertureSize, false);
-            show_image(grayscaleImage, monoResult, "Halftone Opening РћРїРµСЂР°С‚РѕСЂ РѕС‚РєСЂС‹С‚РёСЏ");
+            grayscaleOpening(grayscaleImage, monoResult, apertureSize);
+            show_image(grayscaleImage, monoResult, "Оператор открытия (полутоновой)");
             break;
+        }
         case 9:
-            cout << "Enter aperture size: ";
-            cin >> apertureSize;
-            cout << "Enter contour size: ";
-            cin >> contourSize;
-            contour_selection(grayscaleImage, monoResult, apertureSize,
-                contourSize);
-            show_image(grayscaleImage, monoResult, "Contour Selection РћРїРµСЂР°С‚РѕСЂ РІС‹РґРµР»РµРЅРёСЏ РєРѕРЅС‚СѓСЂРѕРІ");
+        {
+            cv::Mat contoursImage;
+            contoursOperator(grayscaleImage, contoursImage);
+            sobelOperator(grayscaleImage, contoursImage);
+            show_image(grayscaleImage, contoursImage, "Оператор выделения контуров");
             break;
+        }
         case 10:
-            gradient(grayscaleImage, monoResult);
-            show_image(grayscaleImage, monoResult, "РњРЅРѕРіРѕРјР°СЃС€С‚Р°Р±РЅС‹Р№ РјРѕСЂС„РѕР»РѕРіРёС‡РµСЃРєРёР№ РіСЂР°РґРёРµРЅС‚");
+        {
+            Mat multiscaleGradientImage;
+            int minKernelSize = 3;  // Минимальный размер структурного элемента
+            int maxKernelSize = 15; // Максимальный размер структурного элемента
+            multiscaleMorphologicalGradient(grayscaleImage, multiscaleGradientImage, minKernelSize, maxKernelSize);
+            show_image(grayscaleImage, multiscaleGradientImage, "Многомасштабный морфологический градиент");
             break;
+        }
         case 0:
-            break;
+            return 0;
         default:
-            cout << "Wrong command!\n Try aganin\n";
+            cout << "Неверна команда!\n Попробуйте снова\n";
             break;
         }
     }
     return 0;
 }
 
-
-
-void show_image(const Mat input_img, Mat& output_img, string filter_name) 
+void show_image(const Mat input_img, Mat& output_img, string filter_name)
 {
-    imshow("РСЃС…РѕРґРЅРѕРµ РёР·РѕР±СЂР°Р¶РµРЅРёРµ", input_img);
+    imshow("Исходное изображение", input_img);
     waitKey(0);
     imshow(filter_name, output_img);
     waitKey(0);
     destroyAllWindows();
-    imwrite("D:/С„РѕС‚Рѕ/" + filter_name + ".jpg", output_img);
+    imwrite("D:/фото/" + filter_name + ".jpg", output_img);
 }
 
-void bin_erode(const Mat& input_img, Mat& output_img, int aperture_size) 
+// Функция бинарной дилатации
+void binaryDilation(cv::Mat& inputImage, cv::Mat& outputImage, int kernelSize)
 {
-    Mat kernel = Mat::ones(aperture_size, aperture_size, CV_8U);
-    int imageHeight = input_img.rows;
-    int imageWidth = input_img.cols;
-    int kernelRadius = aperture_size / 2;
+    outputImage = inputImage.clone();
 
-    for (int y = kernelRadius; y < imageHeight - kernelRadius; ++y) {
-        for (int x = kernelRadius; x < imageWidth - kernelRadius; ++x) {
+    int border = kernelSize / 2;
 
-            bool erode = true;
+    for (int y = border; y < inputImage.rows - border; ++y) {
+        for (int x = border; x < inputImage.cols - border; ++x) {
+            bool hasWhitePixel = false;
 
-            for (int ky = -kernelRadius; ky <= kernelRadius; ++ky) {
-                for (int kx = -kernelRadius; kx <= kernelRadius; ++kx) {
-
-                    if (kernel.at<uchar>(ky + kernelRadius, kx + kernelRadius) == 1
-                        &&
-                        input_img.at<uchar>(y + ky, x + kx) != 255) {
-                        erode = false;
+            for (int ky = -border; ky <= border; ++ky) {
+                for (int kx = -border; kx <= border; ++kx) {
+                    if (inputImage.at<uchar>(y + ky, x + kx) == 255) {
+                        hasWhitePixel = true;
                         break;
                     }
                 }
-                if (!erode) break;
+                if (hasWhitePixel) {
+                    break;
+                }
             }
-            output_img.at<uchar>(y, x) = erode ? 255 : 0;
+
+            outputImage.at<uchar>(y, x) = (hasWhitePixel) ? 255 : 0;
         }
     }
 }
 
-void bin_dilate(const Mat& input_img, Mat& output_img, int aperture_size)
+// Функция бинарной эрозии
+void binaryErosion(cv::Mat& inputImage, cv::Mat& outputImage, int kernelSize)
 {
-    Mat kernel = Mat::ones(aperture_size, aperture_size, CV_8U);
-    int imageHeight = input_img.rows;
-    int imageWidth = input_img.cols;
-    int kernelRadius = aperture_size / 2;
+    outputImage = inputImage.clone();
 
-    for (int y = kernelRadius; y < imageHeight - kernelRadius; ++y) {
-        for (int x = kernelRadius; x < imageWidth - kernelRadius; ++x) {
+    int border = kernelSize / 2;
 
-            bool dilate = false;
+    for (int y = border; y < inputImage.rows - border; ++y) {
+        for (int x = border; x < inputImage.cols - border; ++x) {
+            bool allWhitePixels = true;
 
-            for (int ky = -kernelRadius; ky <= kernelRadius; ++ky) {
-                for (int kx = -kernelRadius; kx <= kernelRadius; ++kx) {
-
-                    if (kernel.at<uchar>(ky + kernelRadius, kx + kernelRadius) == 1
-                        &&
-                        input_img.at<uchar>(y + ky, x + kx) == 255) {
-                        dilate = true;
+            for (int ky = -border; ky <= border; ++ky) {
+                for (int kx = -border; kx <= border; ++kx) {
+                    if (inputImage.at<uchar>(y + ky, x + kx) == 0) {
+                        allWhitePixels = false;
                         break;
                     }
                 }
-                if (dilate) break;
-            }
-            output_img.at<uchar>(y, x) = dilate ? 255 : 0;
-        }
-    }
-}
-
-void mono_erode(const Mat& input_img, Mat& output_img, int aperture_size)
-{
-    int imageHeight = input_img.rows;
-    int imageWidth = input_img.cols;
-    int kernelRadius = aperture_size / 2;
-
-    for (int y = kernelRadius; y < imageHeight - kernelRadius; ++y) {
-        for (int x = kernelRadius; x < imageWidth - kernelRadius; ++x) {
-            float minIntensity = 255.0;
-            for (int ky = -kernelRadius; ky <= kernelRadius; ++ky) {
-                for (int kx = -kernelRadius; kx <= kernelRadius; ++kx) {
-                    float intensity = input_img.at<uchar>(y + ky, x + kx);
-                    if (intensity < minIntensity) {
-                        minIntensity = intensity;
-                    }
+                if (!allWhitePixels) {
+                    break;
                 }
             }
-            output_img.at<uchar>(y, x) = static_cast<uchar>(minIntensity);
+
+            outputImage.at<uchar>(y, x) = (allWhitePixels) ? 255 : 0;
+        }
+    }
+}
+//
+////1
+//void binaryErosion(Mat& inputImage, cv::Mat& outputImage, int kernelSize)
+//{
+//    outputImage = inputImage.clone(); // Создаем копию входного изображения
+//
+//    int border = kernelSize / 2;
+//
+//    for (int y = border; y < inputImage.rows - border; ++y) {
+//        for (int x = border; x < inputImage.cols - border; ++x) {
+//            // Определяем область, покрываемую ядром
+//            cv::Rect regionOfInterest(x - border, y - border, kernelSize, kernelSize);
+//
+//            // Вычисляем сумму пикселей в области
+//            int sum = cv::sum(inputImage(regionOfInterest))[0];
+//
+//            // Если сумма равна нулю, устанавливаем пиксель в черный цвет, иначе в белый
+//            outputImage.at<uchar>(y, x) = (sum == 0) ? 0 : 255;
+//        }
+//    }
+//}
+//
+////2
+//void binaryDilation(cv::Mat& inputImage, cv::Mat& outputImage, int kernelSize)
+//{
+//    outputImage = inputImage.clone(); // Создаем копию входного изображения
+//
+//    int border = kernelSize / 2;
+//
+//    for (int y = border; y < inputImage.rows - border; ++y) {
+//        for (int x = border; x < inputImage.cols - border; ++x) {
+//            // Определяем область, покрываемую ядром
+//            cv::Rect regionOfInterest(x - border, y - border, kernelSize, kernelSize);
+//
+//            // Проверяем, есть ли хотя бы один белый пиксель в области
+//            cv::Mat roi = inputImage(regionOfInterest);
+//            bool hasWhitePixel = cv::countNonZero(roi) > 0;
+//
+//            // Если хотя бы один пиксель белый, устанавливаем текущий пиксель в белый цвет
+//            outputImage.at<uchar>(y, x) = (hasWhitePixel) ? 255 : 0;
+//        }
+//    }
+//}
+
+
+// 5
+void grayscaleErosion(Mat& inputImage, Mat& outputImage, int kernelSize)
+{
+    outputImage = inputImage.clone(); // Создаем копию входного изображения
+
+    int border = kernelSize / 2;
+
+    for (int y = border; y < inputImage.rows - border; ++y) {
+        for (int x = border; x < inputImage.cols - border; ++x) {
+            // Определяем область, покрываемую ядром
+            cv::Rect regionOfInterest(x - border, y - border, kernelSize, kernelSize);
+
+            // Вычисляем минимальное значение в области
+            double minVal;
+            minMaxLoc(inputImage(regionOfInterest), &minVal);
+
+            // Устанавливаем текущий пиксель равным минимальному значению
+            outputImage.at<uchar>(y, x) = static_cast<uchar>(minVal);
         }
     }
 }
 
-void mono_dilate(const Mat& input_img, Mat& output_img, int aperture_size)
+// 6
+void grayscaleDilation(Mat& inputImage, Mat& outputImage, int kernelSize)
 {
-    int imageHeight = input_img.rows;
-    int imageWidth = input_img.cols;
-    int kernelRadius = aperture_size / 2;
+    outputImage = inputImage.clone(); // Создаем копию входного изображения
 
-    for (int y = kernelRadius; y < imageHeight - kernelRadius; ++y) {
-        for (int x = kernelRadius; x < imageWidth - kernelRadius; ++x) {
+    int border = kernelSize / 2;
 
-            uchar maxPixelValue = 0;
+    for (int y = border; y < inputImage.rows - border; ++y) {
+        for (int x = border; x < inputImage.cols - border; ++x) {
+            // Определяем область, покрываемую ядром
+            cv::Rect regionOfInterest(x - border, y - border, kernelSize, kernelSize);
 
-            for (int ky = -kernelRadius; ky <= kernelRadius; ++ky) {
-                for (int kx = -kernelRadius; kx <= kernelRadius; ++kx) {
+            // Вычисляем максимальное значение в области
+            double maxVal;
+            cv::minMaxLoc(inputImage(regionOfInterest), nullptr, &maxVal);
 
-                    uchar pixelValue = input_img.at<uchar>(y + ky, x + kx);
-                    if (pixelValue > maxPixelValue) {
-                        maxPixelValue = pixelValue;
-                    }
+            // Устанавливаем текущий пиксель равным максимальному значению
+            outputImage.at<uchar>(y, x) = static_cast<uchar>(maxVal);
+        }
+    }
+}
+
+void binaryClosing(Mat& inputImage, Mat& outputImage, int kernelSize)
+{
+    Mat temp;
+    binaryErosion(inputImage, temp, kernelSize);
+    binaryDilation(temp, outputImage, kernelSize);
+}
+
+void binaryOpening(Mat& inputImage, Mat& outputImage, int kernelSize)
+{
+    Mat temp;
+    binaryDilation(inputImage, temp, kernelSize);
+    binaryErosion(temp, outputImage, kernelSize);
+}
+
+void grayscaleClosing(cv::Mat& inputImage, cv::Mat& outputImage, int kernelSize)
+{
+    cv::Mat temp;
+    grayscaleErosion(inputImage, temp, kernelSize);
+    grayscaleDilation(temp, outputImage, kernelSize);
+}
+
+void grayscaleOpening(cv::Mat& inputImage, cv::Mat& outputImage, int kernelSize)
+{
+    cv::Mat temp;
+    grayscaleDilation(inputImage, temp, kernelSize);
+    grayscaleErosion(temp, outputImage, kernelSize);
+}
+
+/*
+Многомасштабный морфологический градиент предполагает использование
+различных размеров структурных элементов для выделения контуров
+изображения на разных уровнях масштаба.
+В данном случае, мы реализуем многомасштабный морфологический градиент
+с использованием операций эрозии и дилатации.
+*/
+
+void multiscaleMorphologicalGradient(Mat& inputImage, Mat& outputImage, int minKernelSize, int maxKernelSize)
+{
+    // Создание выходного изображения того же размера, что и входное
+    outputImage = cv::Mat::zeros(inputImage.size(), CV_8UC1);
+
+    // Применение многомасштабного морфологического градиента
+    for (int kernelSize = minKernelSize; kernelSize <= maxKernelSize; ++kernelSize) {
+        cv::Mat eroded, dilated;
+
+        // Эрозия
+        cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
+        cv::erode(inputImage, eroded, element);
+
+        // Дилатация
+        cv::dilate(inputImage, dilated, element);
+
+        // Вычисление разности между дилатированным и эрозированным изображением
+        cv::Mat gradient = dilated - eroded;
+
+        // Обновление выходного изображения, учитывая текущий масштаб
+        outputImage = cv::max(outputImage, gradient);
+    }
+}
+
+void contoursOperator(Mat& inputImage, Mat& outputImage)
+{
+    // Создание выходного изображения того же размера, что и входное
+    outputImage = Mat::zeros(inputImage.size(), CV_8UC1);
+
+    // Создание ядра оператора (например, Щарра)
+    int kernelSize = 3;
+    int scharrX[3][3] = { {-3, 0, 3}, {-10, 0, 10}, {-3, 0, 3} };
+
+    // Применение оператора (например, Щарра)
+    for (int y = 1; y < inputImage.rows - 1; ++y) {
+        for (int x = 1; x < inputImage.cols - 1; ++x) {
+            int gradientX = 0;
+
+            // Вычисление градиента по горизонтали
+            for (int i = -1; i <= 1; ++i) {
+                for (int j = -1; j <= 1; ++j) {
+                    gradientX += inputImage.at<uchar>(y + i, x + j) * scharrX[i + 1][j + 1];
                 }
             }
-            output_img.at<uchar>(y, x) = maxPixelValue;
+
+            // Вычисление аппроксимации градиента
+            int gradientMagnitude = std::abs(gradientX);
+
+            // Ограничение значений до диапазона [0, 255]
+            gradientMagnitude = std::min(255, std::max(0, gradientMagnitude));
+
+            // Применение пороговой обработки для выделения контуров
+            outputImage.at<uchar>(y, x) = (gradientMagnitude > 30) ? 255 : 0;
         }
     }
 }
 
-void close(const Mat& input_img, Mat& output_img, int aperture_size, bool isBin)
+void sobelOperator( cv::Mat& inputImage, cv::Mat& outputImage)
 {
-    Mat tempImage = output_img.clone();
+    outputImage = inputImage.clone();
 
-    if (isBin)
-    {
-        bin_erode(input_img, tempImage, aperture_size);
-        bin_dilate(tempImage, output_img, aperture_size);
+    int rows = inputImage.rows;
+    int cols = inputImage.cols;
+
+    // Оператор Собеля для горизонтальной и вертикальной компонент
+    int sobelX[3][3] = { {-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1} };
+    int sobelY[3][3] = { {-1, -2, -1}, {0, 0, 0}, {1, 2, 1} };
+
+    for (int y = 1; y < rows - 1; ++y) {
+        for (int x = 1; x < cols - 1; ++x) {
+            int gradientX = 0;
+            int gradientY = 0;
+
+            for (int ky = -1; ky <= 1; ++ky) {
+                for (int kx = -1; kx <= 1; ++kx) {
+                    gradientX += inputImage.at<uchar>(y + ky, x + kx) * sobelX[ky + 1][kx + 1];
+                    gradientY += inputImage.at<uchar>(y + ky, x + kx) * sobelY[ky + 1][kx + 1];
+                }
+            }
+
+            // Подсчитываем общий градиент
+            int gradientMagnitude = std::sqrt(gradientX * gradientX + gradientY * gradientY);
+
+            // Ограничиваем значения градиента
+            gradientMagnitude = std::min(255, std::max(0, gradientMagnitude));
+
+            outputImage.at<uchar>(y, x) = gradientMagnitude;
+        }
     }
-    else
-    {
-        mono_erode(input_img, tempImage, aperture_size);
-        mono_dilate(tempImage, output_img, aperture_size);
-    }
-}
-
-void open(const Mat& input_img, Mat& output_img, int aperture_size, bool isBin)
-{
-    Mat tempImage = output_img.clone();
-
-    if (isBin)
-    {
-        bin_dilate(input_img, tempImage, aperture_size);
-        bin_erode(tempImage, output_img, aperture_size);
-    }
-    else
-    {
-        mono_dilate(input_img, tempImage, aperture_size);
-        mono_erode(tempImage, output_img, aperture_size);
-    }
-}
-
-void contour_selection(const Mat& input_img, Mat& output_img, int aperture_size, int contour_size)
-{
-    output_img.zeros(input_img.size(), CV_8U);
-
-    Mat resultDilateImage = input_img.clone();
-    Mat resultErodeImage = input_img.clone();
-    Mat tempDilateImage = input_img.clone();
-    Mat tempErodeImage = input_img.clone();
-
-    mono_dilate(input_img, resultDilateImage, aperture_size);
-    mono_erode(input_img, resultErodeImage, aperture_size);
-
-    for (int i = 1; i < contour_size; i++)
-    {
-        mono_dilate(resultDilateImage, tempDilateImage, aperture_size);
-        mono_erode(resultErodeImage, tempErodeImage, aperture_size);
-
-        resultDilateImage = tempDilateImage.clone();
-        resultErodeImage = tempErodeImage.clone();
-    }
-    output_img = resultDilateImage - resultErodeImage;
-}
-
-void gradient(const Mat& input_img, Mat& output_img)
-{
-    output_img.zeros(input_img.size(), CV_8U);
-
-    int kernelSizes[] = { 1, 3, 5, 7 };
-    int numKernels = sizeof(kernelSizes) / sizeof(int);
-
-    Mat tempDilateImage = output_img.clone();
-    Mat tempErodeImage = output_img.clone();
-    Mat tempGradientImage = output_img.clone();
-
-    for (int i = 1; i < numKernels; ++i)
-    {
-        mono_dilate(input_img, tempDilateImage, kernelSizes[i]);
-        mono_erode(input_img, tempErodeImage, kernelSizes[i]);
-        Mat gradient = tempDilateImage - tempErodeImage;
-        mono_erode(gradient, tempGradientImage, kernelSizes[i - 1]);
-        output_img += tempGradientImage;
-    }
-
-    output_img = output_img / 3;
 }
