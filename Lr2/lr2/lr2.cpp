@@ -15,7 +15,6 @@ void grayscaleErosion(Mat& inputImage, Mat& outputImage, int kernelSize);
 void grayscaleDilation(Mat& inputImage, Mat& outputImage, int kernelSize);
 void grayscaleClosing(Mat& inputImage, Mat& outputImage, int kernelSize);
 void grayscaleOpening(Mat& inputImage, Mat& outputImage, int kernelSize);
-void contoursOperator(Mat& inputImage, Mat& outputImage);
 void multiscaleMorphologicalGradient(Mat& inputImage, Mat& outputImage, int minKernelSize, int maxKernelSize);
 
 void show_image(const Mat input_img, Mat& output_img, string filter_name);
@@ -136,7 +135,6 @@ int main()
         case 9:
         {
             cv::Mat contoursImage;
-            contoursOperator(grayscaleImage, contoursImage);
             sobelOperator(grayscaleImage, contoursImage);
             show_image(grayscaleImage, contoursImage, "Оператор выделения контуров");
             break;
@@ -225,50 +223,6 @@ void binaryErosion(cv::Mat& inputImage, cv::Mat& outputImage, int kernelSize)
         }
     }
 }
-//
-////1
-//void binaryErosion(Mat& inputImage, cv::Mat& outputImage, int kernelSize)
-//{
-//    outputImage = inputImage.clone(); // Создаем копию входного изображения
-//
-//    int border = kernelSize / 2;
-//
-//    for (int y = border; y < inputImage.rows - border; ++y) {
-//        for (int x = border; x < inputImage.cols - border; ++x) {
-//            // Определяем область, покрываемую ядром
-//            cv::Rect regionOfInterest(x - border, y - border, kernelSize, kernelSize);
-//
-//            // Вычисляем сумму пикселей в области
-//            int sum = cv::sum(inputImage(regionOfInterest))[0];
-//
-//            // Если сумма равна нулю, устанавливаем пиксель в черный цвет, иначе в белый
-//            outputImage.at<uchar>(y, x) = (sum == 0) ? 0 : 255;
-//        }
-//    }
-//}
-//
-////2
-//void binaryDilation(cv::Mat& inputImage, cv::Mat& outputImage, int kernelSize)
-//{
-//    outputImage = inputImage.clone(); // Создаем копию входного изображения
-//
-//    int border = kernelSize / 2;
-//
-//    for (int y = border; y < inputImage.rows - border; ++y) {
-//        for (int x = border; x < inputImage.cols - border; ++x) {
-//            // Определяем область, покрываемую ядром
-//            cv::Rect regionOfInterest(x - border, y - border, kernelSize, kernelSize);
-//
-//            // Проверяем, есть ли хотя бы один белый пиксель в области
-//            cv::Mat roi = inputImage(regionOfInterest);
-//            bool hasWhitePixel = cv::countNonZero(roi) > 0;
-//
-//            // Если хотя бы один пиксель белый, устанавливаем текущий пиксель в белый цвет
-//            outputImage.at<uchar>(y, x) = (hasWhitePixel) ? 255 : 0;
-//        }
-//    }
-//}
-
 
 // 5
 void grayscaleErosion(Mat& inputImage, Mat& outputImage, int kernelSize)
@@ -371,39 +325,6 @@ void multiscaleMorphologicalGradient(Mat& inputImage, Mat& outputImage, int minK
 
         // Обновление выходного изображения, учитывая текущий масштаб
         outputImage = cv::max(outputImage, gradient);
-    }
-}
-
-void contoursOperator(Mat& inputImage, Mat& outputImage)
-{
-    // Создание выходного изображения того же размера, что и входное
-    outputImage = Mat::zeros(inputImage.size(), CV_8UC1);
-
-    // Создание ядра оператора (например, Щарра)
-    int kernelSize = 3;
-    int scharrX[3][3] = { {-3, 0, 3}, {-10, 0, 10}, {-3, 0, 3} };
-
-    // Применение оператора (например, Щарра)
-    for (int y = 1; y < inputImage.rows - 1; ++y) {
-        for (int x = 1; x < inputImage.cols - 1; ++x) {
-            int gradientX = 0;
-
-            // Вычисление градиента по горизонтали
-            for (int i = -1; i <= 1; ++i) {
-                for (int j = -1; j <= 1; ++j) {
-                    gradientX += inputImage.at<uchar>(y + i, x + j) * scharrX[i + 1][j + 1];
-                }
-            }
-
-            // Вычисление аппроксимации градиента
-            int gradientMagnitude = std::abs(gradientX);
-
-            // Ограничение значений до диапазона [0, 255]
-            gradientMagnitude = std::min(255, std::max(0, gradientMagnitude));
-
-            // Применение пороговой обработки для выделения контуров
-            outputImage.at<uchar>(y, x) = (gradientMagnitude > 30) ? 255 : 0;
-        }
     }
 }
 
